@@ -47,7 +47,7 @@ const adminItems = [
   ['Analytics', LineChart],
 ]
 
-function AppShell({ onSignOut }) {
+function AppShell({ user, onSignOut }) {
   const [screen, setScreen] = useState('Dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -57,7 +57,7 @@ function AppShell({ onSignOut }) {
   }
 
   const renderScreen = () => {
-    if (screen === 'Dashboard') return <DashboardPage navigate={navigate} />
+    if (screen === 'Dashboard') return <DashboardPage navigate={navigate} user={user} />
     if (screen === 'Alumni Directory' || screen === 'Find Alumni') {
       return <DirectoryPage findMode={screen === 'Find Alumni'} navigate={navigate} />
     }
@@ -66,20 +66,20 @@ function AppShell({ onSignOut }) {
     if (screen === 'Events') return <EventsPage />
     if (screen === 'Messages') return <MessagesPage />
     if (screen === 'Alumni Map') return <AlumniMapPage />
-    if (screen === 'My Profile') return <ProfilePage />
+    if (screen === 'My Profile') return <ProfilePage user={user} />
     if (screen === 'Notifications') return <NotificationsPage />
     if (screen === 'Admin overview' || screen === 'Verification queue' || screen === 'Analytics') {
       return <AdminDashboardPage analyticsOnly={screen === 'Analytics'} />
     }
-    return <DashboardPage navigate={navigate} />
+    return <DashboardPage navigate={navigate} user={user} />
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
+    <div className="min-h-screen bg-slate-100 text-slate-900 lg:flex">
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-72 border-r border-slate-200 bg-white p-4 shadow-sm transition-transform duration-200 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col overflow-y-auto border-r border-slate-200 bg-white p-4 shadow-sm transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:static`}
+        }`}
       >
         <div className="flex items-center justify-between border-b border-slate-200 pb-4">
           <Brand />
@@ -138,14 +138,12 @@ function AppShell({ onSignOut }) {
             onClick={() => navigate('My Profile')}
             className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-slate-100"
           >
-            <img
-              src="https://i.pravatar.cc/80?img=32"
-              alt="Ananya Verma"
-              className="h-10 w-10 rounded-full object-cover"
-            />
+            {user.image
+              ? <img src={user.image} alt={user.name} className="h-10 w-10 rounded-full object-cover" />
+              : <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">{user.name?.[0]}</span>}
             <span>
-              <span className="block text-sm font-semibold text-slate-900">Ananya Verma</span>
-              <span className="block text-xs text-slate-500">Alumni · 2020</span>
+              <span className="block text-sm font-semibold text-slate-900">{user.name}</span>
+              <span className="block text-xs capitalize text-slate-500">{user.role}{user.batch ? ` · ${user.batch}` : ''}</span>
             </span>
           </button>
 
@@ -158,7 +156,15 @@ function AppShell({ onSignOut }) {
         </div>
       </aside>
 
-      <div className="lg:pl-0">
+      {sidebarOpen && (
+        <button
+          className="fixed inset-0 z-30 bg-slate-900/40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-label="Close navigation menu"
+        />
+      )}
+
+      <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-30 border-b border-slate-200 bg-slate-50/90 backdrop-blur">
           <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4 sm:px-6 lg:px-8">
             <button
@@ -190,11 +196,9 @@ function AppShell({ onSignOut }) {
                 onClick={() => navigate('My Profile')}
                 className="overflow-hidden rounded-full border border-slate-200 bg-white p-1"
               >
-                <img
-                  src="https://i.pravatar.cc/80?img=32"
-                  alt="Ananya Verma"
-                  className="h-9 w-9 rounded-full object-cover"
-                />
+                {user.image
+                  ? <img src={user.image} alt={user.name} className="h-9 w-9 rounded-full object-cover" />
+                  : <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">{user.name?.[0]}</span>}
               </button>
             </div>
           </div>

@@ -1,63 +1,37 @@
-import { useState } from 'react'
-import { Check, MapPin, Network } from 'lucide-react'
-import { api } from '../../services/api'
-import { Button, PageTitle, Panel } from '../../components/Ui'
+import { Check, MapPin } from 'lucide-react'
+import { PageTitle, Panel } from '../../components/Ui'
 
-function ProfilePage() {
-  const [message, setMessage] = useState('')
-
-  const saveProfile = async () => {
-    try {
-      await api.updateProfile({
-        title: 'Product Manager',
-        company: 'Google',
-        location: 'Bengaluru',
-        skills: ['Product strategy', 'Figma', 'Research'],
-      })
-      setMessage('Profile saved successfully')
-    } catch (error) {
-      setMessage(error.message)
-    }
-  }
-
+function ProfilePage({ user }) {
   return (
     <div className="space-y-6">
       <PageTitle
         eyebrow="My profile"
-        title="Ananya Verma"
-        text="Keep your professional story current so the right people can find you."
-      >
-        <Button variant="secondary" icon={Network} onClick={saveProfile}>
-          Save profile
-        </Button>
-      </PageTitle>
-
-      {message && <p className="rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{message}</p>}
+        title={user.name}
+        text="Your profile helps the alumni community get to know you."
+      />
 
       <div className="grid gap-4 xl:grid-cols-[1.5fr_0.5fr]">
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="h-28 bg-gradient-to-r from-blue-100 via-sky-100 to-indigo-100" />
+          <div className="h-28 bg-linear-to-r from-blue-100 via-sky-100 to-indigo-100" />
 
           <div className="p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div className="flex items-center gap-4">
-                <img
-                  src="https://i.pravatar.cc/180?img=32"
-                  alt="Ananya Verma"
-                  className="mt-[-52px] h-24 w-24 rounded-full border-4 border-white object-cover shadow-md"
-                />
+                {user.image
+                  ? <img src={user.image} alt={user.name} className="-mt-13 h-24 w-24 rounded-full border-4 border-white object-cover shadow-md" />
+                  : <span className="-mt-13 flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-blue-100 text-3xl font-bold text-blue-700 shadow-md">{user.name?.[0]}</span>}
 
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-2xl font-bold tracking-[-0.05em] text-slate-900">Ananya Verma</h2>
+                    <h2 className="text-2xl font-bold tracking-tighter text-slate-900">{user.name}</h2>
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white">
                       <Check size={12} />
                     </span>
                   </div>
-                  <p className="mt-1 text-sm text-slate-600">Product Manager at Google</p>
+                  <p className="mt-1 text-sm text-slate-600">{[user.title, user.company].filter(Boolean).join(' at ') || user.role}</p>
                   <div className="mt-2 flex items-center gap-1 text-xs text-slate-500">
                     <MapPin size={14} className="text-blue-600" />
-                    <span>Bengaluru, India · Class of 2020</span>
+                    <span>{[user.location, user.batch && `Class of ${user.batch}`].filter(Boolean).join(' · ')}</span>
                   </div>
                 </div>
               </div>
@@ -79,21 +53,15 @@ function ProfilePage() {
             <div className="mt-5 space-y-6">
               <div>
                 <h3 className="text-lg font-semibold text-slate-900">About</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  I enjoy building products that make complex things feel simple. Always happy to share notes on product careers, design systems, and making a transition into tech.
-                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{user.bio || 'Add a short introduction to help your community get to know you.'}</p>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">Experience</h3>
-                <div className="mt-3 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-sm font-bold text-white">
-                    G
-                  </div>
-                  <div>
-                    <p className="font-semibold text-slate-900">Product Manager · Google</p>
-                    <p className="mt-1 text-xs text-slate-500">2022 - Present · Bengaluru</p>
-                  </div>
+                <h3 className="text-lg font-semibold text-slate-900">Skills and interests</h3>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {(user.skills || []).length
+                    ? user.skills.map((skill) => <span key={skill} className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">{skill}</span>)
+                    : <p className="text-sm text-slate-500">No skills added yet.</p>}
                 </div>
               </div>
             </div>
@@ -103,11 +71,11 @@ function ProfilePage() {
         <aside>
           <Panel title="Profile completeness">
             <div className="space-y-4">
-              <p className="text-4xl font-bold tracking-[-0.06em] text-slate-900">82%</p>
+              <p className="text-4xl font-bold tracking-[-0.06em] text-slate-900">{user.profileComplete ? '100%' : '60%'}</p>
               <div className="h-2.5 overflow-hidden rounded-full bg-slate-200">
-                <span className="block h-full rounded-full bg-blue-600" style={{ width: '82%' }} />
+                <span className="block h-full rounded-full bg-blue-600" style={{ width: user.profileComplete ? '100%' : '60%' }} />
               </div>
-              <p className="text-sm text-slate-500">Complete your profile to help alumni find you.</p>
+              <p className="text-sm text-slate-500">Thanks for sharing your profile with the community.</p>
             </div>
           </Panel>
         </aside>

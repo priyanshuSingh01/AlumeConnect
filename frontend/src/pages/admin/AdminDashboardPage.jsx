@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ClipboardCheck, LineChart, ShieldCheck, Users, Zap } from 'lucide-react'
+import { ClipboardCheck, ShieldCheck, Users, Zap } from 'lucide-react'
 import { api } from '../../services/api'
 import { PageTitle, Panel, StatCard } from '../../components/Ui'
 

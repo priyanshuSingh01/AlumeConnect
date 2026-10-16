@@ -18,6 +18,15 @@ function JobsPage() {
       .catch((error) => setStatus(error.message))
   }, [query])
 
+  async function handleReferral(jobId) {
+    try {
+      await api.referJob(jobId)
+      setStatus('')
+    } catch (error) {
+      setStatus(error.message)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <PageTitle
@@ -89,7 +98,7 @@ function JobsPage() {
                 <p className="text-xs text-slate-500">Posted by alumni</p>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => api.request(`/jobs/${job._id}/refer`, { method: 'POST' })}
+                    onClick={() => handleReferral(job._id)}
                     className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-600"
                   >
                     Refer someone

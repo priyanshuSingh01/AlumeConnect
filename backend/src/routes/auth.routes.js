@@ -4,7 +4,7 @@ import { protect } from '../middleware/auth.js'
 import { createToken } from '../utils/token.js'
 
 const router = Router()
-const publicUser = (user) => ({ id: user._id, name: user.name, email: user.email, role: user.role, image: user.image, title: user.title, company: user.company, isVerified: user.isVerified })
+const publicUser = (user) => ({ id: user._id, name: user.name, email: user.email, role: user.role, image: user.image, title: user.title, company: user.company, location: user.location, department: user.department, batch: user.batch, bio: user.bio, skills: user.skills, profileComplete: user.profileComplete, isVerified: user.isVerified })
 
 router.post('/register', async (req, res, next) => {
   try {
@@ -25,6 +25,6 @@ router.post('/login', async (req, res, next) => {
   } catch (error) { next(error) }
 })
 
-router.get('/me', protect, async (req, res) => res.json({ user: req.user }))
+router.get('/me', protect, async (req, res) => res.json({ user: publicUser(req.user) }))
 
 export default router

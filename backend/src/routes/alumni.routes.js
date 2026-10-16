@@ -32,7 +32,11 @@ router.put('/me', protect, async (req, res, next) => {
   try {
     const allowed = ['name', 'title', 'company', 'department', 'batch', 'location', 'bio', 'image', 'skills', 'isMentor', 'mentorAvailability']
     const updates = Object.fromEntries(Object.entries(req.body).filter(([key]) => allowed.includes(key)))
-    const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true, runValidators: true }).select('-password')
+    const user = await User.findById(req.user._id)
+    Object.assign(user, updates)
+    user.profileComplete = Boolean(user.name && user.image && user.location)
+    await user.save()
+    user.password = undefined
     res.json(user)
   } catch (error) { next(error) }
 })

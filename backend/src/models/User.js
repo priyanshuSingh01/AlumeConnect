@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema({
   bio: String,
   image: String,
   skills: [String],
+  profileComplete: { type: Boolean, default: false },
   isVerified: { type: Boolean, default: false },
   isMentor: { type: Boolean, default: false },
   mentorAvailability: { type: String, enum: ['available', 'limited', 'unavailable'], default: 'unavailable' },

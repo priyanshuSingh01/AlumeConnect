@@ -1,13 +1,55 @@
-import { BriefcaseBusiness, CalendarDays, ChevronRight, HeartHandshake, TrendingUp, Users, Zap } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { BriefcaseBusiness, ChevronRight, HeartHandshake, TrendingUp, Users, Zap } from 'lucide-react'
 import { events, people } from '../../data/platformData'
+import { api } from '../../services/api'
 import { Button, PageTitle, Panel, StatCard } from '../../components/Ui'
 
-function DashboardPage({ navigate }) {
+function DashboardPage({ navigate, user }) {
+  const fallbackSuggestions = people.filter((person) => person.name !== user?.name).slice(0, 4)
+  const [suggestedPeople, setSuggestedPeople] = useState(fallbackSuggestions)
+
+  useEffect(() => {
+    let active = true
+    const currentUserId = user?.id || user?._id
+
+    api.getAlumni()
+      .then((result) => {
+        if (!active) return
+        const alumni = Array.isArray(result?.alumni) ? result.alumni : []
+        const filtered = alumni.filter((person) => {
+          const personId = person?._id || person?.id
+          return (
+            person?.name &&
+            person.name !== user?.name &&
+            personId !== currentUserId &&
+            person.email !== user?.email
+          )
+        }).slice(0, 4)
+
+        if (filtered.length > 0) {
+          setSuggestedPeople(filtered)
+          return
+        }
+
+        setSuggestedPeople(fallbackSuggestions)
+      })
+      .catch(() => {
+        if (active) setSuggestedPeople(fallbackSuggestions)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [user?.id, user?._id, user?.email, user?.name])
+
+  const displayName = user?.name?.trim() || 'there'
+  const firstName = displayName.split(/\s+/)[0] || displayName
+
   return (
     <div className="space-y-6">
       <PageTitle
         eyebrow="Overview"
-        title="Good morning, Ananya"
+        title={`Good morning, ${firstName}`}
         text="Here is what is happening across your alumni community today."
       >
         <Button variant="secondary" onClick={() => navigate('Alumni Directory')}>
@@ -91,16 +133,22 @@ function DashboardPage({ navigate }) {
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="New connections" action="View all">
           <div className="space-y-3">
-            {people.slice(0, 4).map((person) => (
-              <div key={person.name} className="flex items-center justify-between rounded-xl border border-slate-200 p-3">
+            {suggestedPeople.map((person) => (
+              <div key={person._id || person.name} className="flex items-center justify-between rounded-xl border border-slate-200 p-3">
                 <div className="flex items-center gap-3">
-                  <img src={person.image} alt={person.name} className="h-11 w-11 rounded-full object-cover" />
+                  <img src={person.image || 'https://i.pravatar.cc/160?img=47'} alt={person.name} className="h-11 w-11 rounded-full object-cover" />
                   <div>
                     <p className="font-semibold text-slate-900">{person.name}</p>
-                    <p className="text-xs text-slate-500">{person.title}</p>
+                    <p className="text-xs text-slate-500">{person.title || 'Alumni member'}</p>
                   </div>
                 </div>
-                <button className="rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-700">
+                <button
+                  onClick={() => {
+                    const personId = person._id || person.id
+                    if (personId) api.connect(personId)
+                  }}
+                  className="rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-700"
+                >
                   Connect
                 </button>
               </div>

@@ -1,4 +1,5 @@
-import { ArrowRight, BriefcaseBusiness, CalendarDays, HeartHandshake, Menu, Network, Sparkles, Users } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowRight, BriefcaseBusiness, CalendarDays, HeartHandshake, Menu, Network, Sparkles, X } from 'lucide-react'
 import Brand from '../../components/Brand'
 import { people } from '../../data/platformData'
 
@@ -114,27 +115,34 @@ function FeatureCard({ item }) {
 }
 
 function LandingPage({ onStart }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const scrollToSection = (id) => {
+    setMobileMenuOpen(false)
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 md:px-8">
+      <header className="relative mx-auto flex max-w-6xl items-center justify-between px-6 py-5 md:px-8">
         <Brand />
 
         <nav className="hidden items-center gap-8 md:flex">
           <button
             className="text-sm font-medium text-slate-600 transition hover:text-blue-600"
-            onClick={() => document.getElementById('benefits')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() => scrollToSection('benefits')}
           >
             Platform
           </button>
           <button
             className="text-sm font-medium text-slate-600 transition hover:text-blue-600"
-            onClick={() => document.getElementById('featured')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() => scrollToSection('featured')}
           >
             Community
           </button>
           <button
             className="text-sm font-medium text-slate-600 transition hover:text-blue-600"
-            onClick={onStart}
+            onClick={() => { setMobileMenuOpen(false); onStart() }}
           >
             For administrators
           </button>
@@ -143,21 +151,35 @@ function LandingPage({ onStart }) {
         <div className="flex items-center gap-3">
           <button
             className="hidden text-sm font-medium text-slate-600 transition hover:text-blue-600 sm:inline-flex"
-            onClick={onStart}
+            onClick={() => { setMobileMenuOpen(false); onStart() }}
           >
             Sign in
           </button>
           <button
-            onClick={onStart}
+            onClick={() => { setMobileMenuOpen(false); onStart() }}
             className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
           >
             Join network
             <ArrowRight size={16} />
           </button>
-          <button className="inline-flex rounded-xl border border-slate-200 bg-white p-2 text-slate-700 md:hidden">
-            <Menu size={18} />
+          <button
+            className="inline-flex rounded-xl border border-slate-200 bg-white p-2 text-slate-700 md:hidden"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation"
+          >
+            {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
+        {mobileMenuOpen && (
+          <nav id="mobile-navigation" className="absolute inset-x-4 top-18 z-40 space-y-1 rounded-2xl border border-slate-200 bg-white p-3 shadow-lg md:hidden">
+            <button onClick={() => scrollToSection('benefits')} className="w-full rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50">Platform</button>
+            <button onClick={() => scrollToSection('featured')} className="w-full rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50">Community</button>
+            <button onClick={() => { setMobileMenuOpen(false); onStart() }} className="w-full rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50">For administrators</button>
+            <button onClick={() => { setMobileMenuOpen(false); onStart() }} className="w-full rounded-xl px-3 py-3 text-left text-sm font-semibold text-blue-700 hover:bg-blue-50">Sign in</button>
+          </nav>
+        )}
       </header>
 
       <main>

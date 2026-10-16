@@ -9,7 +9,7 @@ async function request(path, options = {}) {
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...options.headers },
     })
   } catch {
-    throw new Error('Backend API unavailable. Start MongoDB and run `cd backend && npm run dev`.')
+    throw new Error('API unavailable. Check the backend connection.')
   }
   const data = await response.json().catch(() => ({}))
   if (!response.ok) throw new Error(data.message || 'Request failed')
@@ -19,6 +19,7 @@ async function request(path, options = {}) {
 export const authApi = {
   login: (payload) => request('/auth/login', { method: 'POST', body: JSON.stringify(payload) }),
   register: (payload) => request('/auth/register', { method: 'POST', body: JSON.stringify(payload) }),
+  getCurrentUser: () => request('/auth/me'),
 }
 
 export const api = {
@@ -28,6 +29,7 @@ export const api = {
   getMentors: () => request('/mentorship/mentors'),
   requestMentorship: (payload) => request('/mentorship/request', { method: 'POST', body: JSON.stringify(payload) }),
   getJobs: (params = '') => request(`/jobs${params}`),
+  referJob: (jobId) => request(`/jobs/${jobId}/refer`, { method: 'POST' }),
   getEvents: () => request('/events'),
   registerEvent: (eventId) => request(`/events/${eventId}/register`, { method: 'POST' }),
   getMessages: (userId) => request(`/messages/${userId}`),
