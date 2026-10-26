@@ -1,7 +1,7 @@
 import app from './app.js'
 import { connectDatabase } from './config/db.js'
 
-const port = process.env.PORT || 5000
+const port = process.env.PORT || 5001
 
 connectDatabase()
   .then(() => app.listen(port, () => console.log(`AlumConnect API running on http://localhost:${port}`)))
