@@ -44,5 +44,6 @@ npm install
 npm run dev
 ```
 
-The frontend connects to `http://localhost:5001/api` in development. Set
-`VITE_API_URL` in the frontend environment to use another API URL.
+The frontend connects to `http://localhost:5001/api` in development and to the
+deployed Render API in production. Set `VITE_API_URL` in the frontend
+environment to override either default.

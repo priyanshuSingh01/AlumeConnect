@@ -1,12 +1,9 @@
 const API_URL = (
-  import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5001/api' : '')
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? 'http://localhost:5001/api' : 'https://alumconnect-api.onrender.com/api')
 ).replace(/\/+$/, '')
 
 async function request(path, options = {}) {
-  if (!API_URL) {
-    throw new Error('Backend API URL is not configured. Set VITE_API_URL in Vercel and redeploy.')
-  }
-
   const token = localStorage.getItem('alumconnect_token')
   let response
   try {
