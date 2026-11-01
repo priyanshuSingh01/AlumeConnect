@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Bell,
   BriefcaseBusiness,
@@ -11,6 +11,7 @@ import {
   LineChart,
   Menu,
   MessageCircle,
+  Search,
   ShieldCheck,
   UserRound,
   Users,
@@ -27,6 +28,7 @@ import AlumniMapPage from '../pages/map/AlumniMapPage'
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
 import ProfilePage from '../pages/profile/ProfilePage'
 import NotificationsPage from '../pages/notifications/NotificationsPage'
+import { api } from '../services/api'
 
 const navItems = [
   ['Dashboard', LayoutDashboard],
@@ -47,29 +49,60 @@ const adminItems = [
   ['Analytics', LineChart],
 ]
 
-function AppShell({ user, onSignOut }) {
+function AppShell({ user, onSignOut, onUserUpdate }) {
   const [screen, setScreen] = useState('Dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [notificationError, setNotificationError] = useState('')
+  const [platformSearch, setPlatformSearch] = useState('')
+  const [directorySearch, setDirectorySearch] = useState('')
+  const [messageContactId, setMessageContactId] = useState('')
 
-  const navigate = (nextScreen) => {
+  useEffect(() => {
+    let active = true
+    api.getNotifications()
+      .then(({ notifications }) => {
+        if (active) {
+          setUnreadCount(notifications.filter((notification) => !notification.read).length)
+          setNotificationError('')
+        }
+      })
+      .catch((error) => {
+        if (active) setNotificationError(error.message)
+      })
+    return () => {
+      active = false
+    }
+  }, [screen])
+
+  const navigate = (nextScreen, searchTerm, contactId) => {
+    if (nextScreen === 'Alumni Directory' || (nextScreen === 'Find Alumni' && typeof searchTerm !== 'string')) setDirectorySearch('')
+    if (typeof searchTerm === 'string') setDirectorySearch(searchTerm)
+    if (nextScreen === 'Messages') setMessageContactId(contactId || '')
     setScreen(nextScreen)
     setSidebarOpen(false)
+  }
+
+  const submitPlatformSearch = (event) => {
+    event.preventDefault()
+    setDirectorySearch(platformSearch.trim())
+    navigate('Find Alumni')
   }
 
   const renderScreen = () => {
     if (screen === 'Dashboard') return <DashboardPage navigate={navigate} user={user} />
     if (screen === 'Alumni Directory' || screen === 'Find Alumni') {
-      return <DirectoryPage findMode={screen === 'Find Alumni'} navigate={navigate} />
+      return <DirectoryPage key={`${screen}-${directorySearch}`} findMode={screen === 'Find Alumni'} navigate={navigate} user={user} initialQuery={directorySearch} />
     }
-    if (screen === 'Mentorship') return <MentorshipPage />
-    if (screen === 'Jobs & Internships') return <JobsPage />
-    if (screen === 'Events') return <EventsPage />
-    if (screen === 'Messages') return <MessagesPage />
-    if (screen === 'Alumni Map') return <AlumniMapPage />
-    if (screen === 'My Profile') return <ProfilePage user={user} />
+    if (screen === 'Mentorship') return <MentorshipPage user={user} onUserUpdate={onUserUpdate} />
+    if (screen === 'Jobs & Internships') return <JobsPage user={user} />
+    if (screen === 'Events') return <EventsPage user={user} />
+    if (screen === 'Messages') return <MessagesPage key={messageContactId} user={user} initialContactId={messageContactId} />
+    if (screen === 'Alumni Map') return <AlumniMapPage navigate={navigate} />
+    if (screen === 'My Profile') return <ProfilePage user={user} onUserUpdate={onUserUpdate} />
     if (screen === 'Notifications') return <NotificationsPage />
     if (screen === 'Admin overview' || screen === 'Verification queue' || screen === 'Analytics') {
-      return <AdminDashboardPage analyticsOnly={screen === 'Analytics'} />
+      return <AdminDashboardPage analyticsOnly={screen === 'Analytics'} verificationOnly={screen === 'Verification queue'} />
     }
     return <DashboardPage navigate={navigate} user={user} />
   }
@@ -106,32 +139,32 @@ function AppShell({ user, onSignOut }) {
                 <Icon size={17} />
                 <span className="flex-1 text-left">{label}</span>
                 {label === 'Notifications' && (
-                  <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">
-                    3
-                  </span>
+                  unreadCount > 0 && <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">{unreadCount > 9 ? '9+' : unreadCount}</span>
                 )}
               </button>
             ))}
           </nav>
         </div>
 
-        <div className="mt-8">
-          <p className="px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Administration</p>
-          <nav className="mt-3 space-y-1">
-            {adminItems.map(([label, Icon]) => (
-              <button
-                key={label}
-                onClick={() => navigate(label)}
-                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                  screen === label ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                }`}
-              >
-                <Icon size={17} />
-                <span>{label}</span>
-              </button>
-            ))}
-          </nav>
-        </div>
+        {user.role === 'admin' && (
+          <div className="mt-8">
+            <p className="px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Administration</p>
+            <nav className="mt-3 space-y-1">
+              {adminItems.map(([label, Icon]) => (
+                <button
+                  key={label}
+                  onClick={() => navigate(label)}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                    screen === label ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
+                >
+                  <Icon size={17} />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+        )}
 
         <div className="mt-auto space-y-4 border-t border-slate-200 pt-4">
           <button
@@ -176,21 +209,24 @@ function AppShell({ user, onSignOut }) {
             </button>
 
             <div className="flex-1">
-              <p className="text-xs text-slate-500">Tuesday, 16 June 2026</p>
+              <p className="text-xs text-slate-500">{new Intl.DateTimeFormat(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())}</p>
               <p className="text-sm font-semibold text-slate-900">{screen}</p>
             </div>
 
             <div className="hidden items-center gap-3 md:flex">
-              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-500">
-                <span>⌕</span>
+              <form onSubmit={submitPlatformSearch} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-500">
+                <Search size={16} aria-hidden="true" />
                 <input
+                  value={platformSearch}
+                  onChange={(event) => setPlatformSearch(event.target.value)}
                   className="w-40 border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
-                  placeholder="Search the platform"
+                  placeholder="Search people"
+                  aria-label="Search people"
                 />
-              </div>
-              <button className="relative rounded-xl border border-slate-200 bg-white p-2 text-slate-700">
+              </form>
+              <button onClick={() => navigate('Notifications')} title={notificationError || 'Open notifications'} aria-label="Open notifications" className="relative rounded-xl border border-slate-200 bg-white p-2 text-slate-700">
                 <Bell size={18} />
-                <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-red-500" />
+                {unreadCount > 0 && <span className="absolute -right-1 -top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>}
               </button>
               <button
                 onClick={() => navigate('My Profile')}

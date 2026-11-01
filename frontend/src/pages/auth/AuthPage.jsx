@@ -62,11 +62,11 @@ function AuthPage({ onComplete, onBack }) {
             <h2 className="mt-3 text-2xl font-bold tracking-[-0.05em] text-slate-900">
               {isRegistering ? 'Create your account' : 'Sign in to AlumniConnect'}
             </h2>
-            <p className="mt-2 text-sm text-slate-600">Choose your account type to continue.</p>
+            <p className="mt-2 text-sm text-slate-600">{isRegistering ? 'Choose your community role to create an account.' : 'Choose your account type to continue.'}</p>
           </div>
 
-          <div className="mb-5 grid grid-cols-3 gap-2 rounded-xl bg-slate-100 p-1">
-            {['Alumni', 'Student', 'Admin'].map((item) => (
+          <div className={`mb-5 grid gap-2 rounded-xl bg-slate-100 p-1 ${isRegistering ? 'grid-cols-2' : 'grid-cols-3'}`}>
+            {(isRegistering ? ['Alumni', 'Student'] : ['Alumni', 'Student', 'Admin']).map((item) => (
               <button
                 type="button"
                 key={item}
@@ -124,42 +124,19 @@ function AuthPage({ onComplete, onBack }) {
             </div>
           )}
 
-          <div className="mb-5 flex items-center justify-between text-xs text-slate-500">
-            <label className="inline-flex items-center gap-2">
-              <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-blue-600" />
-              Remember me
-            </label>
-            <button type="button" className="font-semibold text-blue-600 hover:text-blue-700">
-              Forgot password?
-            </button>
-          </div>
-
           <Button type="submit" className="w-full" variant="primary">
             {loading ? 'Please wait...' : isRegistering ? 'Create account' : `Continue as ${role}`}
           </Button>
-
-          <div className="my-5 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-            <span className="h-px flex-1 bg-slate-200" />
-            <span>or continue with</span>
-            <span className="h-px flex-1 bg-slate-200" />
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setError('Google login needs OAuth credentials before it can be enabled.')}
-            className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
-          >
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold">
-              G
-            </span>
-            Continue with Google
-          </button>
 
           <p className="mt-5 text-center text-xs text-slate-500">
             {isRegistering ? 'Already have an account?' : 'New here?'}{' '}
             <button
               type="button"
-              onClick={() => setIsRegistering((current) => !current)}
+              onClick={() => {
+                setIsRegistering((current) => !current)
+                setRole('Alumni')
+                setError('')
+              }}
               className="font-semibold text-blue-600 hover:text-blue-700"
             >
               {isRegistering ? 'Sign in' : 'Create account'}

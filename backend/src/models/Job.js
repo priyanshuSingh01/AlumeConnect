@@ -7,9 +7,11 @@ const jobSchema = new mongoose.Schema({
   type: { type: String, enum: ['internship', 'full-time', 'part-time', 'contract', 'remote'], default: 'full-time' },
   salary: String,
   description: String,
+  applicationUrl: String,
   skills: [String],
   postedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   referrals: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  applicants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 }, { timestamps: true })
 
 export default mongoose.model('Job', jobSchema)

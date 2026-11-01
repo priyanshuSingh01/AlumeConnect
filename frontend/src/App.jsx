@@ -29,6 +29,10 @@ function App() {
     setMode(authenticatedUser.profileComplete || authenticatedUser.role === 'admin' ? 'app' : 'profileSetup')
   }
 
+  const handleUserUpdate = (updatedUser) => {
+    setUser((currentUser) => ({ ...currentUser, ...updatedUser, id: updatedUser._id || updatedUser.id || currentUser?.id }))
+  }
+
   const signOut = () => {
     localStorage.removeItem('alumconnect_token')
     setUser(null)
@@ -39,7 +43,7 @@ function App() {
   if (mode === 'auth') return <AuthPage onComplete={handleAuthComplete} onBack={() => setMode('landing')} />
   if (mode === 'checking') return <main className="flex min-h-screen items-center justify-center bg-slate-100 text-sm text-slate-500">Loading your profile...</main>
   if (mode === 'profileSetup') return <ProfileSetupPage user={user} onComplete={(updatedUser) => { setUser(updatedUser); setMode('app') }} />
-  return <AppShell user={user} onSignOut={signOut} />
+  return <AppShell user={user} onSignOut={signOut} onUserUpdate={handleUserUpdate} />
 }
 
 export default App

@@ -1,26 +1,81 @@
-import { useEffect, useState } from 'react'
-import { ArrowRight, CalendarDays, Check, UserRound } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { ArrowRight, CalendarDays, Check, Plus, UserRound, X } from 'lucide-react'
 import { api } from '../../services/api'
-import { PageTitle } from '../../components/Ui'
+import { Button, PageTitle } from '../../components/Ui'
 
-function EventsPage() {
+const eventTabs = [
+  { label: 'All events', types: [] },
+  { label: 'Meetups', types: ['community'] },
+  { label: 'Reunions', types: ['reunion'] },
+  { label: 'Career events', types: ['career', 'webinar'] },
+]
+
+function EventsPage({ user }) {
   const [events, setEvents] = useState([])
-  const [registered, setRegistered] = useState([])
+  const [activeTab, setActiveTab] = useState('All events')
   const [status, setStatus] = useState('Loading events...')
+  const [error, setError] = useState('')
+  const [registeringId, setRegisteringId] = useState('')
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [form, setForm] = useState({ title: '', type: 'community', date: '', location: '', description: '' })
+  const isOrganizer = user?.role === 'alumni' || user?.role === 'admin'
 
   useEffect(() => {
+    let active = true
     api
       .getEvents()
       .then((result) => {
+        if (!active) return
         setEvents(result.events)
         setStatus('')
       })
-      .catch((error) => setStatus(error.message))
+      .catch((loadError) => {
+        if (active) {
+          setStatus('')
+          setError(loadError.message)
+        }
+      })
+    return () => {
+      active = false
+    }
   }, [])
 
   const register = async (id) => {
-    await api.registerEvent(id)
-    setRegistered((current) => [...current, id])
+    setRegisteringId(id)
+    setError('')
+    try {
+      const { event } = await api.registerEvent(id)
+      setEvents((current) => current.map((item) => item._id === event._id ? event : item))
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setRegisteringId('')
+    }
+  }
+
+  const visibleEvents = useMemo(() => {
+    const types = eventTabs.find((tab) => tab.label === activeTab)?.types || []
+    return events.filter((event) => types.length === 0 || types.includes(event.type))
+  }, [activeTab, events])
+
+  const createEvent = async (event) => {
+    event.preventDefault()
+    setCreating(true)
+    setFormError('')
+    try {
+      const created = await api.createEvent(form)
+      const eventWithHost = { ...created, createdBy: { _id: user?.id || user?._id, name: user?.name } }
+      setEvents((current) => [...current, eventWithHost].sort((a, b) => new Date(a.date) - new Date(b.date)))
+      setActiveTab('All events')
+      setShowCreateForm(false)
+      setForm({ title: '', type: 'community', date: '', location: '', description: '' })
+    } catch (createError) {
+      setFormError(createError.message)
+    } finally {
+      setCreating(false)
+    }
   }
 
   return (
@@ -29,31 +84,38 @@ function EventsPage() {
         eyebrow="Stay involved"
         title="Events & gatherings"
         text="Make time for conversations that become the stories you keep."
-      />
+      >
+        {isOrganizer && <Button onClick={() => { setShowCreateForm(true); setFormError('') }}><Plus size={16} /> Host an event</Button>}
+      </PageTitle>
 
       <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-4">
-        {['All events', 'Meetups', 'Reunions', 'Career events'].map((tab, index) => (
+        {eventTabs.map((tab) => (
           <button
-            key={tab}
+            key={tab.label}
+            type="button"
+            onClick={() => setActiveTab(tab.label)}
+            aria-pressed={activeTab === tab.label}
             className={`rounded-full px-3 py-2 text-xs font-semibold ${
-              index === 0
+              activeTab === tab.label
                 ? 'bg-blue-50 text-blue-700'
                 : 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700'
             }`}
           >
-            {tab}
+            {tab.label}
           </button>
         ))}
       </div>
 
-      {status && <p className="rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-700">{status}</p>}
+      {status && <p role="status" className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700">{status}</p>}
+      {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {events.map((event) => {
+        {visibleEvents.map((event) => {
           const date = new Date(event.date)
           const month = date.toLocaleDateString('en', { month: 'short' }).toUpperCase()
           const day = date.getDate()
           const formattedDate = date.toLocaleString()
+          const isRegistered = event.attendees?.some((attendee) => (attendee?._id || attendee)?.toString() === (user?.id || user?._id))
 
           return (
             <article key={event._id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -84,21 +146,23 @@ function EventsPage() {
                 <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-200 pt-4">
                   <span className="text-sm text-slate-600">{event.attendees?.length || 0} going</span>
                   <button
+                    type="button"
                     onClick={() => register(event._id)}
-                    className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold ${
-                      registered.includes(event._id)
+                    disabled={isRegistered || registeringId === event._id}
+                    className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-70 ${
+                      isRegistered
                         ? 'bg-emerald-50 text-emerald-700'
                         : 'bg-blue-600 text-white hover:bg-blue-700'
                     }`}
                   >
-                    {registered.includes(event._id) ? (
+                    {isRegistered ? (
                       <>
                         <Check size={14} />
                         Registered
                       </>
                     ) : (
                       <>
-                        Register
+                        {registeringId === event._id ? 'Registering...' : 'Register'}
                         <ArrowRight size={14} />
                       </>
                     )}
@@ -109,6 +173,59 @@ function EventsPage() {
           )
         })}
       </div>
+      {!status && !error && visibleEvents.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+          <CalendarDays className="mx-auto text-slate-400" size={26} />
+          <h3 className="mt-3 font-semibold text-slate-900">No events in this category</h3>
+          <p className="mt-1 text-sm text-slate-500">Choose another category or check back later.</p>
+        </div>
+      )}
+
+      {showCreateForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" onMouseDown={(event) => {
+          if (event.target === event.currentTarget && !creating) setShowCreateForm(false)
+        }}>
+          <form onSubmit={createEvent} className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">Community event</p>
+                <h2 className="mt-2 text-xl font-bold text-slate-900">Host an event</h2>
+                <p className="mt-1 text-sm text-slate-500">Share a gathering with your alumni community.</p>
+              </div>
+              <button type="button" aria-label="Close event form" onClick={() => setShowCreateForm(false)} disabled={creating} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><X size={18} /></button>
+            </div>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <label className="sm:col-span-2">
+                <span className="mb-1.5 block text-xs font-semibold text-slate-700">Event name</span>
+                <input required maxLength={120} value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-blue-300 focus:bg-white" />
+              </label>
+              <label>
+                <span className="mb-1.5 block text-xs font-semibold text-slate-700">Category</span>
+                <select value={form.type} onChange={(event) => setForm((current) => ({ ...current, type: event.target.value }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none">
+                  <option value="community">Meetup</option><option value="reunion">Reunion</option><option value="webinar">Webinar</option><option value="career">Career event</option>
+                </select>
+              </label>
+              <label>
+                <span className="mb-1.5 block text-xs font-semibold text-slate-700">Date and time</span>
+                <input required type="datetime-local" min={new Date().toISOString().slice(0, 16)} value={form.date} onChange={(event) => setForm((current) => ({ ...current, date: event.target.value }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none" />
+              </label>
+              <label className="sm:col-span-2">
+                <span className="mb-1.5 block text-xs font-semibold text-slate-700">Location or meeting link</span>
+                <input maxLength={160} value={form.location} onChange={(event) => setForm((current) => ({ ...current, location: event.target.value }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-blue-300 focus:bg-white" />
+              </label>
+              <label className="sm:col-span-2">
+                <span className="mb-1.5 block text-xs font-semibold text-slate-700">Description</span>
+                <textarea maxLength={1000} rows={3} value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-blue-300 focus:bg-white" />
+              </label>
+            </div>
+            {formError && <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p>}
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" disabled={creating} onClick={() => setShowCreateForm(false)} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">Cancel</button>
+              <Button type="submit" disabled={creating}>{creating ? 'Publishing...' : 'Publish event'}</Button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   )
 }

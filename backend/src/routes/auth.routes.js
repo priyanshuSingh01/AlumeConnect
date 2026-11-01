@@ -4,12 +4,13 @@ import { protect } from '../middleware/auth.js'
 import { createToken } from '../utils/token.js'
 
 const router = Router()
-const publicUser = (user) => ({ id: user._id, name: user.name, email: user.email, role: user.role, image: user.image, title: user.title, company: user.company, location: user.location, department: user.department, batch: user.batch, bio: user.bio, skills: user.skills, profileComplete: user.profileComplete, isVerified: user.isVerified })
+const publicUser = (user) => ({ id: user._id, name: user.name, email: user.email, role: user.role, image: user.image, title: user.title, company: user.company, location: user.location, department: user.department, batch: user.batch, bio: user.bio, skills: user.skills, profileComplete: user.profileComplete, isVerified: user.isVerified, isMentor: user.isMentor, mentorAvailability: user.mentorAvailability })
 
 router.post('/register', async (req, res, next) => {
   try {
     const { name, email, password, role = 'alumni' } = req.body
     if (!name || !email || !password) return res.status(400).json({ message: 'Name, email and password are required' })
+    if (!['alumni', 'student'].includes(role)) return res.status(403).json({ message: 'Admin accounts must be created by an administrator' })
     if (await User.exists({ email })) return res.status(409).json({ message: 'An account with this email already exists' })
     const user = await User.create({ name, email, password, role })
     res.status(201).json({ user: publicUser(user), token: createToken(user) })

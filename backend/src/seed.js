@@ -13,6 +13,8 @@ const users = [
   { name: 'Rahul Menon', email: 'rahul@alumconnect.test', password: 'password123', role: 'alumni', title: 'Software Engineer', company: 'Microsoft', batch: 2021, location: 'Hyderabad', skills: ['React', 'Cloud'], isVerified: true },
 ]
 
+const daysFromNow = (days) => new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+
 async function seed() {
   await connectDatabase()
   await User.deleteMany({})
@@ -22,8 +24,8 @@ async function seed() {
   const admin = createdUsers[0]
   const priya = createdUsers[2]
   await Event.create([
-    { title: 'Alumni Product Circle', type: 'community', date: new Date('2026-06-18T13:30:00Z'), location: 'Online', speaker: 'Priya Sharma', createdBy: priya._id },
-    { title: 'Breaking into Global Tech', type: 'career', date: new Date('2026-06-24T12:00:00Z'), location: 'Main auditorium', speaker: 'Alumni Relations', createdBy: admin._id },
+    { title: 'Alumni Product Circle', type: 'community', date: daysFromNow(7), location: 'Online', speaker: 'Priya Sharma', createdBy: priya._id },
+    { title: 'Breaking into Global Tech', type: 'career', date: daysFromNow(14), location: 'Main auditorium', speaker: 'Alumni Relations', createdBy: admin._id },
   ])
   await Job.create([
     { title: 'Product Designer', company: 'Atlassian', location: 'Bengaluru · Hybrid', type: 'full-time', salary: '₹24 - 32 LPA', skills: ['Figma', 'Design systems'], postedBy: priya._id },

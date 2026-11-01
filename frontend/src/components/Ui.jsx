@@ -46,13 +46,13 @@ export function PageTitle({ eyebrow, title, text, children }) {
   )
 }
 
-export function Panel({ title, action, children, className = '' }) {
+export function Panel({ title, action, onAction, children, className = '' }) {
   return (
     <section className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ${className}`}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <h3 className="text-base font-semibold text-slate-900">{title}</h3>
         {action && (
-          <button className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
+          <button type="button" onClick={onAction} disabled={!onAction} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 disabled:cursor-default disabled:text-slate-400">
             {action}
             <ArrowRight size={14} />
           </button>

@@ -65,7 +65,7 @@ function BenefitCard({ icon: Icon, title, text }) {
   )
 }
 
-function FeatureCard({ item }) {
+function FeatureCard({ item, onStart }) {
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between">
@@ -106,8 +106,8 @@ function FeatureCard({ item }) {
         ))}
       </div>
 
-      <button className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700">
-        View profile
+      <button onClick={onStart} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700">
+        Join to connect
         <ArrowRight size={15} />
       </button>
     </article>
@@ -336,7 +336,7 @@ function LandingPage({ onStart }) {
 
             <div className="grid gap-5 lg:grid-cols-3">
               {highlightCards.map((item) => (
-                <FeatureCard key={item.name} item={item} />
+                <FeatureCard key={item.name} item={item} onStart={onStart} />
               ))}
             </div>
           </div>

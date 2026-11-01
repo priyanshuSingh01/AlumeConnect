@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema({
   skills: [String],
   profileComplete: { type: Boolean, default: false },
   isVerified: { type: Boolean, default: false },
+  verificationStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   isMentor: { type: Boolean, default: false },
   mentorAvailability: { type: String, enum: ['available', 'limited', 'unavailable'], default: 'unavailable' },
 }, { timestamps: true })

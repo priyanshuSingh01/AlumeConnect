@@ -29,14 +29,23 @@ Demo login: `admin@alumconnect.test` or `ananya@alumconnect.test` with password 
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 - `GET /api/alumni`
+- `GET /api/alumni/locations`
+- `GET /api/alumni/connections`
+- `POST /api/alumni/:id/connect`
 - `PUT /api/alumni/me`
 - `GET /api/mentorship/mentors`
+- `GET /api/mentorship/requests`
 - `POST /api/mentorship/request`
+- `POST /api/mentorship/requests/:id/respond`
 - `GET|POST /api/jobs`
+- `POST /api/jobs/:id/apply`
+- `POST /api/jobs/:id/refer`
 - `GET|POST /api/events`
 - `POST /api/events/:id/register`
+- `POST /api/mentorship/requests/:id/respond`
 - `GET|POST /api/messages/:userId`
 - `GET /api/notifications`
+- `PATCH /api/notifications/:id/read`
 - `GET /api/admin/stats`
 - `GET /api/admin/verification`
 

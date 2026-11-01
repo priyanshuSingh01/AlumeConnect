@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import Event from '../models/Event.js'
-import { protect } from '../middleware/auth.js'
+import { protect, requireRole } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -16,7 +16,7 @@ router.get('/', protect, async (req, res, next) => {
 	}
 })
 
-router.post('/', protect, async (req, res, next) => {
+router.post('/', protect, requireRole('alumni', 'admin'), async (req, res, next) => {
 	try {
 		const event = await Event.create({ ...req.body, createdBy: req.user._id })
 		res.status(201).json(event)
