@@ -13,6 +13,7 @@ import {
   MessageCircle,
   Search,
   ShieldCheck,
+  Trash2,
   UserRound,
   Users,
   X,
@@ -28,7 +29,7 @@ import AlumniMapPage from '../pages/map/AlumniMapPage'
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
 import ProfilePage from '../pages/profile/ProfilePage'
 import NotificationsPage from '../pages/notifications/NotificationsPage'
-import { api } from '../services/api'
+import { api, authApi } from '../services/api'
 
 const navItems = [
   ['Dashboard', LayoutDashboard],
@@ -57,6 +58,10 @@ function AppShell({ user, onSignOut, onUserUpdate }) {
   const [platformSearch, setPlatformSearch] = useState('')
   const [directorySearch, setDirectorySearch] = useState('')
   const [messageContactId, setMessageContactId] = useState('')
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteError, setDeleteError] = useState('')
+  const [deletingAccount, setDeletingAccount] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -87,6 +92,19 @@ function AppShell({ user, onSignOut, onUserUpdate }) {
     event.preventDefault()
     setDirectorySearch(platformSearch.trim())
     navigate('Find Alumni')
+  }
+
+  const deleteAccount = async (event) => {
+    event.preventDefault()
+    setDeletingAccount(true)
+    setDeleteError('')
+    try {
+      await authApi.deleteAccount(deletePassword)
+      onSignOut()
+    } catch (error) {
+      setDeleteError(error.message)
+      setDeletingAccount(false)
+    }
   }
 
   const renderScreen = () => {
@@ -186,8 +204,53 @@ function AppShell({ user, onSignOut, onUserUpdate }) {
           >
             Sign out
           </button>
+          <button
+            onClick={() => { setDeleteAccountOpen(true); setDeleteError(''); setDeletePassword('') }}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50"
+          >
+            <Trash2 size={16} />
+            Delete account
+          </button>
         </div>
       </aside>
+
+      {deleteAccountOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" onMouseDown={(event) => {
+          if (event.target === event.currentTarget && !deletingAccount) setDeleteAccountOpen(false)
+        }}>
+          <section role="dialog" aria-modal="true" aria-labelledby="delete-account-title" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-100 text-red-700">
+              <Trash2 size={20} />
+            </div>
+            <h2 id="delete-account-title" className="mt-4 text-lg font-bold text-slate-900">Delete your account?</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              This permanently deletes your profile, messages, connection and mentorship requests, and job posts. Events you created remain available to the community without your profile attached. This action cannot be undone.
+            </p>
+            <form onSubmit={deleteAccount} className="mt-5 space-y-4">
+              <label className="block text-sm font-semibold text-slate-700">
+                Enter your password to confirm
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  value={deletePassword}
+                  onChange={(event) => setDeletePassword(event.target.value)}
+                  className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                />
+              </label>
+              {deleteError && <p role="alert" className="text-sm text-red-700">{deleteError}</p>}
+              <div className="flex justify-end gap-3">
+                <button type="button" disabled={deletingAccount} onClick={() => setDeleteAccountOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
+                  Cancel
+                </button>
+                <button type="submit" disabled={deletingAccount || !deletePassword} className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60">
+                  {deletingAccount ? 'Deleting...' : 'Permanently delete'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
 
       {sidebarOpen && (
         <button

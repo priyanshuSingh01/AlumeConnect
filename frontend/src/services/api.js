@@ -23,6 +23,7 @@ export const authApi = {
   login: (payload) => request('/auth/login', { method: 'POST', body: JSON.stringify(payload) }),
   register: (payload) => request('/auth/register', { method: 'POST', body: JSON.stringify(payload) }),
   getCurrentUser: () => request('/auth/me'),
+  deleteAccount: (password) => request('/auth/me', { method: 'DELETE', body: JSON.stringify({ password }) }),
 }
 
 export const api = {
